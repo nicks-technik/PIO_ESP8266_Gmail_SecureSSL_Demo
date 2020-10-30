@@ -10,7 +10,6 @@
  * see https://www.base64encode.org/ for encoding / decoding
  */
 
-
 #include <Arduino.h>
 
 #include <base64.h>
@@ -184,6 +183,7 @@ byte response()
   {
     Serial.write(client.read());
   }
+  
 
   if (respCode >= '4')
   {
