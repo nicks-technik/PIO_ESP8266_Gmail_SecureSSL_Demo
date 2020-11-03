@@ -14,7 +14,7 @@
 
 #include <base64.h>
 #include <ESP8266WiFi.h>
-#include "Config.h"
+#include "secure.h"
 
 /*
  * const char* _ssid = "Greypuss";
