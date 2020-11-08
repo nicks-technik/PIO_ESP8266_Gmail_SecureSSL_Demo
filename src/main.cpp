@@ -14,28 +14,32 @@
 
 #include <base64.h>
 #include <ESP8266WiFi.h>
-#include "secure.h"
 
+// Secured Password and other Setup Variables
+#include "secure.h"
 /*
  * const char* _ssid = "Greypuss";
  * const char* _password = "mypassword";
  * const char* _GMailServer = "smtp.gmail.com";
  * const char* _mailUser = "mygmailaddress@gmail.com";
  * const char* _mailPassword = "my Google password";
+ * const char* _MailFrom = "MAIL FROM: <arduinitepower@gmail.com>";
+ * const char* _RCPTTo = "RCPT To: <ralph@gmail.com>";
+ * const char* _To = "To: Home Alone Group<totally@made.up>";
 */
 
 const char* ssid = _ssid;
 const char* fingerprint = "289509731da223e5218031c38108dc5d014e829b"; // For smtp.gmail.com
 
-WiFiClientSecure client;
+WiFiClientSecure _WifiClientSecure;
 
 // Forward declarations of functions (only required in Eclipse IDE)
-byte response();
-byte sendEmail();
+// byte response();
+// byte sendEmail();
 
 void setup() {
-  Serial.begin(74880);
-  delay(10);
+  Serial.begin(115200);
+  // delay(10);
 
   // Connect to WiFi network
   Serial.print("Connecting to ");
@@ -50,7 +54,7 @@ void setup() {
   Serial.println("My IP address: ");
   Serial.println(WiFi.localIP());
 
-  delay(1000);
+  // delay(1000);
   sendEmail();
 }
 
@@ -61,7 +65,7 @@ void loop() {
 // Function send a secure email via Gmail
 byte sendEmail()
 {
-  //client.setFingerprint(fingerprint); // not available in axTLS::WiFiClientSecure 4.2.2
+  //_WifiClientSecure.setFingerprint(fingerprint); // not available in axTLS::WiFiClientSecure 4.2.2
   // port 465=SSL 567=TLS; 587 not available with library 4.2.2
   // this all needs Google security downgrading:
   // https://myaccount.google.com/lesssecureapps?utm_source=google-account&utm_medium=web
@@ -74,7 +78,7 @@ byte sendEmail()
  * See https://stackoverflow.com/questions/17281669/using-smtp-gmail-and-starttls
  */  
   Serial.println("Attempting to connect to GMAIL server");
-  if (client.connect(_GMailServer, 465) == 1) {
+  if (_WifiClientSecure.connect(_GMailServer, 465) == 1) {
     Serial.println(F("Connected"));
   } else {
     Serial.print(F("Connection failed:"));
@@ -84,7 +88,7 @@ byte sendEmail()
     return 0;
 
   Serial.println(F("Sending Extended Hello"));
-  client.println("EHLO gmail.com");
+  _WifiClientSecure.println("EHLO gmail.com");
   if (!response())
     return 0;
 
@@ -93,71 +97,74 @@ byte sendEmail()
   //if (!response())
   //  return 0;
   //Serial.println(F("Sending EHLO"));
-  //client.println("EHLO gmail.com");
+  //_WifiClientSecure.println("EHLO gmail.com");
   //if (!response())
   //  return 0;
   
   Serial.println(F("Sending auth login"));
-  client.println("auth login");
+  _WifiClientSecure.println("auth login");
   if (!response())
     return 0;
 
   Serial.println(F("Sending User"));
   // Change to your base64, ASCII encoded user
-  client.println(base64::encode(_mailUser));
+  _WifiClientSecure.println(base64::encode(_mailUser));
   if (!response())
     return 0;
 
   Serial.println(F("Sending Password"));
   // change to your base64, ASCII encoded password
-  client.println(base64::encode(_mailPassword));
+  _WifiClientSecure.println(base64::encode(_mailPassword));
   if (!response())
     return 0;
 
   Serial.println(F("Sending From"));
   // your email address (sender) - MUST include angle brackets
-  client.println(F("MAIL FROM: <arduinitepower@gmail.com>"));
+  // _WifiClientSecure.println(F("MAIL FROM: <arduinitepower@gmail.com>"));
+  _WifiClientSecure.println(F(_MailFrom));
   if (!response())
     return 0;
 
   // change to recipient address - MUST include angle brackets
   Serial.println(F("Sending To"));
-  client.println(F("RCPT To: <ralph@gmail.com>"));
+  // _WifiClientSecure.println(F("RCPT To: <ralph@gmail.com>"));
+  _WifiClientSecure.println(F(_RCPTTo));
   // Repeat above line for EACH recipient
   if (!response())
     return 0;
 
   Serial.println(F("Sending DATA"));
-  client.println(F("DATA"));
+  _WifiClientSecure.println(F("DATA"));
   if (!response())
     return 0;
 
   Serial.println(F("Sending email"));
   // recipient address (include option display name if you want)
-  client.println(F("To: Home Alone Group<totally@made.up>"));
+  // _WifiClientSecure.println(F("To: Home Alone Group<totally@made.up>"));
+  _WifiClientSecure.println(F(_To));
 
   // change to your address
-  client.println(F("From: HomeAlone@gmail.com"));
-  client.println(F("Subject: Your Arduino\r\n"));
-  client.println(F("This email was sent securely via an encrypted mail link.\n"));
-  client.println(F("In the last hour there was: 8 activities detected. Please check all is well."));
-  client.println(F("This email will NOT be repeated for this hour.\n"));
-  client.println(F("This email was sent from an unmonitored email account - please do not reply."));
-  client.println(F("Love and kisses from Dougle and Benny. They wrote this sketch."));
+  _WifiClientSecure.println(F("From: HomeAlone@gmail.com"));
+  _WifiClientSecure.println(F("Subject: Your Arduino\r\n"));
+  _WifiClientSecure.println(F("This email was sent securely via an encrypted mail link.\n"));
+  _WifiClientSecure.println(F("In the last hour there was: 8 activities detected. Please check all is well."));
+  _WifiClientSecure.println(F("This email will NOT be repeated for this hour.\n"));
+  _WifiClientSecure.println(F("This email was sent from an unmonitored email account - please do not reply."));
+  _WifiClientSecure.println(F("Love and kisses from Dougle and Benny. They wrote this sketch."));
 
   // IMPORTANT you must send a complete line containing just a "." to end the conversation
   // So the PREVIOUS line to this one must be a prinln not just a print
-  client.println(F("."));
+  _WifiClientSecure.println(F("."));
   if (!response())
     return 0;
 
   Serial.println(F("Sending QUIT"));
-  client.println(F("QUIT"));
+  _WifiClientSecure.println(F("QUIT"));
   if (!response())
     return 0;
 
-  client.stop();
-  Serial.println(F("Disconnected"));
+  _WifiClientSecure.stop();
+  Serial.println(F("Disconnected Client"));
   return 1;
 }
 
@@ -166,22 +173,22 @@ byte response()
 {
   // Wait for a response for up to X seconds
   int loopCount = 0;
-  while (!client.available()) {
+  while (!_WifiClientSecure.available()) {
     delay(1);
     loopCount++;
     // if nothing received for 10 seconds, timeout
     if (loopCount > 10000) {
-      client.stop();
+      _WifiClientSecure.stop();
       Serial.println(F("\r\nTimeout"));
       return 0;
     }
   }
 
   // Take a snapshot of the response code
-  byte respCode = client.peek();
-  while (client.available())
+  byte respCode = _WifiClientSecure.peek();
+  while (_WifiClientSecure.available())
   {
-    Serial.write(client.read());
+    Serial.write(_WifiClientSecure.read());
   }
   
 
@@ -193,3 +200,8 @@ byte response()
   }
   return 1;
 }
+
+
+
+
+
