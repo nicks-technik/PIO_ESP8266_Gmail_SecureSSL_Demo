@@ -1,3 +1,5 @@
+// You can check the file alternative for an other way
+
 /*
  * This demo sketch will fail at the Gmail login unless your Google account has
  * set the following option:
@@ -15,7 +17,7 @@
 #include <base64.h>
 #include <ESP8266WiFi.h>
 
-// Secured Password and other Setup Variables
+// Contains secured Password and other Setup Variables
 #include "secure.h"
 /*
  * const char* _ssid = "Greypuss";
@@ -23,30 +25,32 @@
  * const char* _GMailServer = "smtp.gmail.com";
  * const char* _mailUser = "mygmailaddress@gmail.com";
  * const char* _mailPassword = "my Google password";
- * const char* _MailFrom = "MAIL FROM: <arduinitepower@gmail.com>";
- * const char* _RCPTTo = "RCPT To: <ralph@gmail.com>";
- * const char* _To = "To: Home Alone Group<totally@made.up>";
+ * const String _To = "To: Home Alone Group<totally@made.up>";
+ * const String _From = "From: expressifmail+test@gmail.com";
 */
 
-const char* ssid = _ssid;
-const char* fingerprint = "289509731da223e5218031c38108dc5d014e829b"; // For smtp.gmail.com
+const char *ssid = _ssid;
+const char *fingerprint = "289509731da223e5218031c38108dc5d014e829b"; // For smtp.gmail.com
 
 WiFiClientSecure _WifiClientSecure;
 
 // Forward declarations of functions (only required in Eclipse IDE)
-// byte response();
-// byte sendEmail();
+byte response();
+byte sendEmail();
 
-void setup() {
+void setup()
+{
+  delay(500);
   Serial.begin(115200);
-  // delay(10);
 
   // Connect to WiFi network
+  Serial.println("");
   Serial.print("Connecting to ");
   Serial.println(ssid);
 
   WiFi.begin(_ssid, _password);
-  while (WiFi.status() != WL_CONNECTED) {
+  while (WiFi.status() != WL_CONNECTED)
+  {
     delay(500);
     Serial.print(".");
   }
@@ -54,33 +58,45 @@ void setup() {
   Serial.println("My IP address: ");
   Serial.println(WiFi.localIP());
 
-  // delay(1000);
+  Serial.println("");
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
+
+  delay(1000);
   sendEmail();
 }
 
-void loop() {
-//Nothing to do here. Never send email in a loop. You will get blacklisted.
+void loop()
+{
+  //Nothing to do here. Never send email in a loop. You will get blacklisted.
 }
 
 // Function send a secure email via Gmail
 byte sendEmail()
 {
-  //_WifiClientSecure.setFingerprint(fingerprint); // not available in axTLS::WiFiClientSecure 4.2.2
+  _WifiClientSecure.setFingerprint(fingerprint); // not available in axTLS::WiFiClientSecure 4.2.2
+  // if (!response())
+  //   return 0;
   // port 465=SSL 567=TLS; 587 not available with library 4.2.2
   // this all needs Google security downgrading:
   // https://myaccount.google.com/lesssecureapps?utm_source=google-account&utm_medium=web
-  
- /*
+
+  /*
  * Gmail exposes port 465 for SMTP over SSL and port 587 for SMTP with STARTTLS.
  * The difference between these two is that SMTP over SSL first establishes a secure 
  * SSL/TLS connection and conducts SMTP over that connection, and SMTP with STARTTLS 
  * starts with unencrypted SMTP and then switches to SSL/TLS. 
  * See https://stackoverflow.com/questions/17281669/using-smtp-gmail-and-starttls
- */  
+ */
   Serial.println("Attempting to connect to GMAIL server");
-  if (_WifiClientSecure.connect(_GMailServer, 465) == 1) {
+  _WifiClientSecure.setInsecure();
+
+  if (_WifiClientSecure.connect("smtp.gmail.com", 465) == 1)
+  {
     Serial.println(F("Connected"));
-  } else {
+  }
+  else
+  {
     Serial.print(F("Connection failed:"));
     return 0;
   }
@@ -100,7 +116,7 @@ byte sendEmail()
   //_WifiClientSecure.println("EHLO gmail.com");
   //if (!response())
   //  return 0;
-  
+
   Serial.println(F("Sending auth login"));
   _WifiClientSecure.println("auth login");
   if (!response())
@@ -121,14 +137,14 @@ byte sendEmail()
   Serial.println(F("Sending From"));
   // your email address (sender) - MUST include angle brackets
   // _WifiClientSecure.println(F("MAIL FROM: <arduinitepower@gmail.com>"));
-  _WifiClientSecure.println(F(_MailFrom));
+  _WifiClientSecure.println("MAIL " + _From);
   if (!response())
     return 0;
 
   // change to recipient address - MUST include angle brackets
   Serial.println(F("Sending To"));
   // _WifiClientSecure.println(F("RCPT To: <ralph@gmail.com>"));
-  _WifiClientSecure.println(F(_RCPTTo));
+  _WifiClientSecure.println("RCPT " + _To);
   // Repeat above line for EACH recipient
   if (!response())
     return 0;
@@ -141,10 +157,11 @@ byte sendEmail()
   Serial.println(F("Sending email"));
   // recipient address (include option display name if you want)
   // _WifiClientSecure.println(F("To: Home Alone Group<totally@made.up>"));
-  _WifiClientSecure.println(F(_To));
+  _WifiClientSecure.println(_To);
 
   // change to your address
-  _WifiClientSecure.println(F("From: HomeAlone@gmail.com"));
+  // _WifiClientSecure.println(F("From: test@gmail.com"));
+  // _WifiClientSecure.println(_From);
   _WifiClientSecure.println(F("Subject: Your Arduino\r\n"));
   _WifiClientSecure.println(F("This email was sent securely via an encrypted mail link.\n"));
   _WifiClientSecure.println(F("In the last hour there was: 8 activities detected. Please check all is well."));
@@ -173,11 +190,13 @@ byte response()
 {
   // Wait for a response for up to X seconds
   int loopCount = 0;
-  while (!_WifiClientSecure.available()) {
+  while (!_WifiClientSecure.available())
+  {
     delay(1);
     loopCount++;
     // if nothing received for 10 seconds, timeout
-    if (loopCount > 10000) {
+    if (loopCount > 10000)
+    {
       _WifiClientSecure.stop();
       Serial.println(F("\r\nTimeout"));
       return 0;
@@ -190,7 +209,6 @@ byte response()
   {
     Serial.write(_WifiClientSecure.read());
   }
-  
 
   if (respCode >= '4')
   {
@@ -200,8 +218,3 @@ byte response()
   }
   return 1;
 }
-
-
-
-
-
