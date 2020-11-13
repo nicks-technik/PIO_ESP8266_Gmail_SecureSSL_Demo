@@ -20,8 +20,8 @@
 // Contains secured Password and other Setup Variables
 #include "secure.h"
 /*
- * const char* _ssid = "Greypuss";
- * const char* _password = "mypassword";
+ * const char* _WIFI_SSID = "Greypuss";
+ * const char* _WIFI_Password = "mypassword";
  * const char* _GMailServer = "smtp.gmail.com";
  * const char* _mailUser = "mygmailaddress@gmail.com";
  * const char* _mailPassword = "my Google password";
@@ -29,8 +29,7 @@
  * const String _From = "From: expressifmail+test@gmail.com";
 */
 
-const char *ssid = _ssid;
-const char *fingerprint = "289509731da223e5218031c38108dc5d014e829b"; // For smtp.gmail.com
+const char *_VAR_Fingerprint = "289509731da223e5218031c38108dc5d014e829b"; // For smtp.gmail.com
 
 WiFiClientSecure _WifiClientSecure;
 
@@ -46,9 +45,9 @@ void setup()
   // Connect to WiFi network
   Serial.println("");
   Serial.print("Connecting to ");
-  Serial.println(ssid);
+  Serial.println(_WIFI_SSID);
 
-  WiFi.begin(_ssid, _password);
+  WiFi.begin(_WIFI_SSID, _WIFI_Password);
   while (WiFi.status() != WL_CONNECTED)
   {
     delay(500);
@@ -57,10 +56,6 @@ void setup()
   Serial.println("");
   Serial.println("My IP address: ");
   Serial.println(WiFi.localIP());
-
-  Serial.println("");
-  Serial.print("Connecting to ");
-  Serial.println(ssid);
 
   delay(1000);
   sendEmail();
@@ -74,7 +69,7 @@ void loop()
 // Function send a secure email via Gmail
 byte sendEmail()
 {
-  _WifiClientSecure.setFingerprint(fingerprint); // not available in axTLS::WiFiClientSecure 4.2.2
+  _WifiClientSecure.setFingerprint(_VAR_Fingerprint); // not available in axTLS::WiFiClientSecure 4.2.2
   // if (!response())
   //   return 0;
   // port 465=SSL 567=TLS; 587 not available with library 4.2.2
@@ -218,3 +213,4 @@ byte response()
   }
   return 1;
 }
+
